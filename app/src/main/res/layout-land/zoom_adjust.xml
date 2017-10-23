@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/zoom_toast"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="#50ffffff"
+    android:layout_alignParentBottom="true"
+    android:layout_alignParentEnd="true"
+    android:layout_marginEnd="84dp"
+    android:layout_marginBottom="84dp">
+
+    <ImageButton
+        android:id="@+id/imagebutton_zoom_in"
+        style="@style/ButtonStyle"
+        android:src="@mipmap/zoomin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"/>
+
+    <ImageButton
+        android:id="@+id/imagebutton_zoom_out"
+        android:src="@mipmap/zoomout"
+        style="@style/ButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/imagebutton_zoom_in"/>
+
+    <ImageButton
+        android:id="@+id/imagebutton_cancel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/cancel"
+        style="@style/ButtonStyle"
+        android:layout_below="@+id/imagebutton_zoom_out"/>
+
+</RelativeLayout>

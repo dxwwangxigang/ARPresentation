@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:surfaceview="http://schemas.android.com/apk/res-auto"
+    xmlns:expandable_selector="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.dxesoft.ar.tango.arpresentation.MainActivity">
+
+    <org.rajawali3d.view.SurfaceView
+        android:id="@+id/ar_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        surfaceview:frameRate="30.0"
+        surfaceview:isTransparent="true"
+        surfaceview:renderMode="RENDER_WHEN_DIRTY" />
+
+    <ImageButton
+        android:id="@+id/imageButton_setting"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/settings"
+        style="@style/ButtonStyle"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_alignParentEnd="true"/>
+
+    <ImageButton
+        android:id="@+id/imageButton_putmodel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/putmodel"
+        style="@style/ButtonStyle"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="16dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"/>
+
+    <com.karumi.expandableselector.ExpandableSelector
+        android:id="@+id/es_icon"
+        xmlns:expandable_selector="http://schemas.android.com/apk/res-auto"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="16dp"
+        android:layout_marginEnd="16dp"
+        expandable_selector:animation_duration="100"/>
+
+
+
+    <ImageView
+        android:id="@+id/imageview_focusing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/focusing"
+        android:layout_centerInParent="true"/>
+
+    <RelativeLayout
+        android:id="@+id/layout_mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/imageview_mask"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@mipmap/background"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"/>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="正在启动Tango......"
+            android:id="@+id/textView_strating_tango"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:textColor="#000000"/>
+        <TextView
+            android:id="@+id/textView_strating_tango_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tango已成功启动"
+            android:layout_below="@id/textView_strating_tango"
+            android:layout_marginTop="4dp"
+            android:layout_alignStart="@+id/textView_strating_tango"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/textView_loading_model"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="正在加载模型......"
+            android:layout_below="@id/textView_strating_tango_ok"
+            android:layout_marginTop="12dp"
+            android:layout_alignStart="@+id/textView_strating_tango"
+            android:textColor="#000000"/>
+
+        <TextView
+            android:id="@+id/textView_loading_model_ok"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="模型已成功加载"
+            android:layout_below="@id/textView_loading_model"
+            android:layout_marginTop="4dp"
+            android:layout_alignStart="@+id/textView_loading_model"
+            android:textColor="#000000"/>
+
+    </RelativeLayout>
+
+</RelativeLayout>
