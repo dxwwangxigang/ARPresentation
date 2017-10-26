@@ -8,10 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
-import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
 import android.app.Activity;
@@ -23,8 +20,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.Display;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -61,9 +56,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class MainActivity extends Activity{
+public class PresentationOnPlaneActivity extends Activity{
     /**********   全局相关属性   **********/
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = PresentationOnPlaneActivity.class.getSimpleName();
     private static final int MODEL_BLANK = 100;
     private static final int MODEL_PRESENTATION = 101;
     private int mMode;
@@ -176,11 +171,12 @@ public class MainActivity extends Activity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
-        mLayoutView = (RelativeLayout)getLayoutInflater().inflate(R.layout.activity_main, null);
+        //setContentView(R.layout.activity_presentation_on_plane);
+        mLayoutView = (RelativeLayout)getLayoutInflater().inflate(R.layout.activity_presentation_on_plane, null);
 
         setContentView(mLayoutView);
         mLayoutView = getLayoutInflater().inflate(R.layout.zoom_adjust, (ViewGroup)mLayoutView, true);
+        mLayoutView = getLayoutInflater().inflate(R.layout.layout_mask, (ViewGroup)mLayoutView, true);
         mLayoutZoom = (RelativeLayout)findViewById(R.id.zoom_toast);
         mButtonZoomIn = (ImageButton)findViewById(R.id.imagebutton_zoom_in);
         mButtonZoomOut = (ImageButton)findViewById(R.id.imagebutton_zoom_out);
@@ -230,6 +226,7 @@ public class MainActivity extends Activity{
         /**
          * 一般控件的定义&初始化
          */
+
         mLayoutMask = (RelativeLayout)findViewById(R.id.layout_mask);
         mButtonPutModel.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -242,7 +239,7 @@ public class MainActivity extends Activity{
 
 
         // 初始化SurfaceView
-        mSurfaceView = (SurfaceView) findViewById(R.id.ar_view);
+        mSurfaceView = (SurfaceView) findViewById(R.id.ar_view_on_plane);
         mRenderer = new PlaneFittingRenderer(this);
         mSurfaceView.setSurfaceRenderer(mRenderer);
         // 不要让SurfaceView显示在最上层
@@ -339,26 +336,26 @@ public class MainActivity extends Activity{
                                 }
                                 mTimer.schedule(mTimerTask, 0, 100);
 
-                                // Toast.makeText(MainActivity.this, "定位",Toast.LENGTH_SHORT).show();
+                                // Toast.makeText(PresentationOnPlaneActivity.this, "定位",Toast.LENGTH_SHORT).show();
                                 mImageViewFocusing.setVisibility(View.VISIBLE);
                                 mExpandableSelector.collapse();
                                 updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
 
                                 break;
                             case 2:// 旋转button
-                                Toast.makeText(MainActivity.this, "旋转",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(PresentationOnPlaneActivity.this, "旋转",Toast.LENGTH_SHORT).show();
                                 mExpandableSelector.collapse();
                                 updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
                                 break;
                             case 3:// 缩放button
                                 mLayoutZoom.setVisibility(View.VISIBLE);
-                                //Toast.makeText(MainActivity.this, "缩放",Toast.LENGTH_SHORT).show();
+                                //Toast.makeText(PresentationOnPlaneActivity.this, "缩放",Toast.LENGTH_SHORT).show();
                                 mExpandableSelector.collapse();
                                 updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
                                 break;
                             /*
                             case 4:// 移动button
-                                Toast.makeText(MainActivity.this, "移动",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(PresentationOnPlaneActivity.this, "移动",Toast.LENGTH_SHORT).show();
                                 mExpandableSelector.collapse();
                                 updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
                                 break;
@@ -414,6 +411,7 @@ public class MainActivity extends Activity{
                 if (mTango != null) {
                     mTango.disconnectCamera(TangoCameraIntrinsics.TANGO_CAMERA_COLOR);
                     mTango.disconnect();
+                    mTango = null;
                 }
                 // We need to invalidate the connected texture ID so that we cause a
                 // re-connection in the OpenGL thread after resume.
@@ -431,7 +429,7 @@ public class MainActivity extends Activity{
      * 我们需要在每次OnResume()或OnStart()时调用本方法，重建Tango Object
      */
     private void bindTangoService() {
-        mTango = new Tango(MainActivity.this, new Runnable() {
+        mTango = new Tango(PresentationOnPlaneActivity.this, new Runnable() {
             // Pass in a Runnable to be called from UI thread when Tango is ready; this Runnable
             // will be running on a new thread.
             // When Tango is ready, we can call Tango functions safely here only when there are no
@@ -440,7 +438,7 @@ public class MainActivity extends Activity{
             public void run() {
                 // Synchronize against disconnecting while the service is being used in the OpenGL
                 // thread or in the UI thread.
-                synchronized (MainActivity.this) {
+                synchronized (PresentationOnPlaneActivity.this) {
                     try {
                         mConfig = setupTangoConfig(mTango);
                         mTango.connect(mConfig);
@@ -508,7 +506,7 @@ public class MainActivity extends Activity{
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-                        ActivityCompat.requestPermissions(MainActivity.this,
+                        ActivityCompat.requestPermissions(PresentationOnPlaneActivity.this,
                                 new String[]{CAMERA_PERMISSION}, CAMERA_PERMISSION_CODE);
                     }
                 })
@@ -593,7 +591,7 @@ public class MainActivity extends Activity{
                 // into the scene.
 
                 try {
-                    synchronized (MainActivity.this) {
+                    synchronized (PresentationOnPlaneActivity.this) {
                         // 如果没连接到Tango Service，以下代码不执行
                         if (!mIsConnected) {
                             return;
@@ -745,7 +743,7 @@ public class MainActivity extends Activity{
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this,
+                Toast.makeText(PresentationOnPlaneActivity.this,
                         getString(resId), Toast.LENGTH_LONG).show();
                 finish();
             }

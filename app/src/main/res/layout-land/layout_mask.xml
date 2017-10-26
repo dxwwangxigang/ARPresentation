@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/layout_mask"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/imageview_mask"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@mipmap/background"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"/>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="正在启动Tango......"
+        android:id="@+id/textView_strating_tango"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:textColor="#000000"/>
+    <TextView
+        android:id="@+id/textView_strating_tango_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tango已成功启动"
+        android:layout_below="@id/textView_strating_tango"
+        android:layout_marginTop="4dp"
+        android:layout_alignStart="@+id/textView_strating_tango"
+        android:textColor="#000000"/>
+
+    <TextView
+        android:id="@+id/textView_loading_model"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="正在加载模型......"
+        android:layout_below="@id/textView_strating_tango_ok"
+        android:layout_marginTop="12dp"
+        android:layout_alignStart="@+id/textView_strating_tango"
+        android:textColor="#000000"/>
+
+    <TextView
+        android:id="@+id/textView_loading_model_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="模型已成功加载"
+        android:layout_below="@id/textView_loading_model"
+        android:layout_marginTop="4dp"
+        android:layout_alignStart="@+id/textView_loading_model"
+        android:textColor="#000000"/>
+
+</RelativeLayout>
+

@@ -35,20 +35,17 @@ public class WelcomeActivity extends Activity {
         mButtonPresen.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(WelcomeActivity.this, MainActivity.class);
-                intent.putExtra("mode", MODEL_PRESENTATION);
+                Intent intent = new Intent(WelcomeActivity.this, PresentationInRoomActivity.class);
                 startActivity(intent);
-                WelcomeActivity.this.finish();
             }
         });
 
         mButtonBlank.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(WelcomeActivity.this, MainActivity.class);
+                Intent intent = new Intent(WelcomeActivity.this, PresentationOnPlaneActivity.class);
                 intent.putExtra("mode", MODEL_BLANK);
                 startActivity(intent);
-                WelcomeActivity.this.finish();
             }
         });
     }
