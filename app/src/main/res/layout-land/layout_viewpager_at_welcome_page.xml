@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/relativeLayout_viewpager"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="360dp"
+    android:layout_height="wrap_content"
+    android:background="@color/colorPrimary"
+    android:layout_alignParentEnd="true"
+    android:layout_centerVertical="true"
+    android:layout_marginEnd="64dp">
+
+    <ImageButton
+        android:id="@+id/button_add_room"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:src="@mipmap/add"
+        android:background="@android:color/transparent"/>
+
+    <ImageButton
+        android:id="@+id/button_find_room"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/find"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        android:layout_toEndOf="@id/button_add_room"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"/>
+
+    <ImageButton
+        android:id="@+id/button_user_profile"
+        android:src="@mipmap/user"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="@android:color/transparent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"/>
+
+    <com.dxesoft.ar.tango.arpresentation.util.RoomViewPager
+        android:id="@+id/viewpager"
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/button_add_room">
+
+    </com.dxesoft.ar.tango.arpresentation.util.RoomViewPager>
+
+</RelativeLayout>

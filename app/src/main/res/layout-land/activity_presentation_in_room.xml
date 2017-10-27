@@ -6,7 +6,7 @@
     xmlns:surfaceview="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.dxesoft.ar.tango.arpresentation.PresentationInRoomActivity">
+    tools:context="com.dxesoft.ar.tango.arpresentation.PresentInRoomActivity">
 
     <org.rajawali3d.view.SurfaceView
         android:id="@+id/ar_view_in_room"

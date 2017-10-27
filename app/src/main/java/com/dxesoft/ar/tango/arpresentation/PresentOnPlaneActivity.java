@@ -1,14 +1,21 @@
 package com.dxesoft.ar.tango.arpresentation;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.display.DisplayManager;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.app.Activity;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.os.SystemClock;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -21,13 +28,13 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.google.atap.tangoservice.Tango;
 import com.google.atap.tangoservice.TangoCameraIntrinsics;
 import com.google.atap.tangoservice.TangoConfig;
 import com.google.atap.tangoservice.TangoCoordinateFramePair;
 import com.google.atap.tangoservice.TangoErrorException;
 import com.google.atap.tangoservice.TangoEvent;
+import com.google.atap.tangoservice.TangoException;
 import com.google.atap.tangoservice.TangoInvalidException;
 import com.google.atap.tangoservice.TangoOutOfDateException;
 import com.google.atap.tangoservice.TangoPointCloudData;
@@ -35,21 +42,25 @@ import com.google.atap.tangoservice.TangoPoseData;
 import com.google.atap.tangoservice.TangoXyzIjData;
 import com.google.tango.support.TangoPointCloudManager;
 import com.google.tango.support.TangoSupport;
+import com.karumi.expandableselector.ExpandableItem;
 import com.karumi.expandableselector.ExpandableSelector;
+import com.karumi.expandableselector.ExpandableSelectorListener;
+import com.karumi.expandableselector.OnExpandableItemClickListener;
 
 import org.rajawali3d.scene.ASceneFrameCallback;
 import org.rajawali3d.view.SurfaceView;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class PresentationInRoomActivity extends Activity {
+public class PresentOnPlaneActivity extends Activity{
     /**********   全局相关属性   **********/
-    private static final String TAG = PresentationInRoomActivity.class.getSimpleName();
+    private static final String TAG = PresentOnPlaneActivity.class.getSimpleName();
     private static final int MODEL_BLANK = 100;
     private static final int MODEL_PRESENTATION = 101;
-    private int mMode;
     private boolean mRemoveMask = false;
     private Handler mHandlerMaskControl = new Handler(){
         public void handleMessage(android.os.Message msg){
@@ -69,6 +80,8 @@ public class PresentationInRoomActivity extends Activity {
                 case EVENT_HIDE_ALL:
                     mLayoutMask.setVisibility(View.INVISIBLE);
                     break;
+                case EVENT_SHOW_PUTMODEL:
+                    mButtonPutModel.setVisibility(View.VISIBLE);
                 default:
                     break;
             }
@@ -103,7 +116,7 @@ public class PresentationInRoomActivity extends Activity {
     private static final int EVENT_LOAD_MODEL = 0x403;
     private static final int EVENT_ERASE_MODEL = 0x404;
 
-
+    private WorkThread mWorkThread;
     private Timer mTimer = new Timer();
     private float[] lMatrix = {
             1f, 0f, 0f, 0f,
@@ -111,6 +124,7 @@ public class PresentationInRoomActivity extends Activity {
             0f, 0f, 1f, 0f,
             0f, 0f, 0f, 1f
     };
+    private MyTimerTask mTimerTask = new MyTimerTask();
 
     /**********   控件   **********/
     private TextView mTextViewStartTango;
@@ -118,9 +132,15 @@ public class PresentationInRoomActivity extends Activity {
     private TextView mTextViewLoadModel;
     private TextView mTextViewLoadModelOK;
     private ImageView mImageViewMask;
-
+    private ExpandableSelector mExpandableSelector;
+    private ImageView mImageViewFocusing;
+    private ImageButton mButtonPutModel;
+    private ImageButton mButtonZoomIn;
+    private ImageButton mButtonZoomOut;
+    private ImageButton mButtonZoomCancel;
 
     private View mLayoutView;
+    private RelativeLayout mLayoutZoom;
     private RelativeLayout mLayoutMask;
 
     /**********   Camera权限申请相关   **********/
@@ -145,31 +165,81 @@ public class PresentationInRoomActivity extends Activity {
     private float[] mDepthTPlane;
     private double mPlanePlacedTimestamp;
     /**********   模型Renderder相关   **********/
-    private PresentInRoomRenderer mRenderer;
+    private PresentOnPlaneRenderer mRenderer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mLayoutView = (RelativeLayout)getLayoutInflater().inflate(R.layout.activity_presentation_in_room, null);
+        //setContentView(R.layout.activity_presentation_on_plane);
+        mLayoutView = (RelativeLayout)getLayoutInflater().inflate(R.layout.activity_presentation_on_plane, null);
+
         setContentView(mLayoutView);
+        mLayoutView = getLayoutInflater().inflate(R.layout.zoom_adjust, (ViewGroup)mLayoutView, true);
+        mLayoutView = getLayoutInflater().inflate(R.layout.layout_mask, (ViewGroup)mLayoutView, true);
+        mLayoutZoom = (RelativeLayout)findViewById(R.id.zoom_toast);
+        mButtonZoomIn = (ImageButton)findViewById(R.id.imagebutton_zoom_in);
+        mButtonZoomOut = (ImageButton)findViewById(R.id.imagebutton_zoom_out);
+        mButtonZoomCancel = (ImageButton)findViewById(R.id.imagebutton_cancel);
+        mButtonZoomIn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mRenderer.setModelScale(2);
+            }
+        });
+        mButtonZoomOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mRenderer.setModelScale(0.5f);
+            }
+        });
+        mButtonZoomCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+//                mButtonZoomOut.setVisibility(View.INVISIBLE);
+//                mButtonZoomIn.setVisibility(View.INVISIBLE);
+//                mButtonZoomCancel.setVisibility(View.INVISIBLE);
+                mLayoutZoom.setVisibility(View.INVISIBLE);
+            }
+        });
+
+
         /**
          * mask相关的控件定义&初始化
          */
-        mLayoutView = getLayoutInflater().inflate(R.layout.layout_mask, (ViewGroup)mLayoutView, true);
-        mLayoutMask = (RelativeLayout)findViewById(R.id.layout_mask);
         mTextViewStartTango = (TextView)findViewById(R.id.textView_strating_tango);
         mTextViewStartTangoOK = (TextView)findViewById(R.id.textView_strating_tango_ok);
         mTextViewLoadModel = (TextView)findViewById(R.id.textView_loading_model);
         mTextViewLoadModelOK = (TextView)findViewById(R.id.textView_loading_model_ok);
         mImageViewMask = (ImageView)findViewById(R.id.imageview_mask);
+        mButtonPutModel = (ImageButton)findViewById(R.id.imageButton_putmodel);
+
         mTextViewStartTango.setVisibility(View.INVISIBLE);
         mTextViewStartTangoOK.setVisibility(View.INVISIBLE);
         mTextViewLoadModel.setVisibility(View.INVISIBLE);
         mTextViewLoadModelOK.setVisibility(View.INVISIBLE);
         mImageViewMask.setVisibility(View.VISIBLE);
 
+        mButtonPutModel.setVisibility(View.INVISIBLE);
+        mLayoutZoom.setVisibility(View.INVISIBLE);
+
+        /**
+         * 一般控件的定义&初始化
+         */
+
+        mLayoutMask = (RelativeLayout)findViewById(R.id.layout_mask);
+        mButtonPutModel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mRenderer.loadModel();
+                mImageViewFocusing.setVisibility(View.INVISIBLE);
+                mTimerTask.cancel();
+            }
+        });
+
+
         // 初始化SurfaceView
-        mSurfaceView = (SurfaceView) findViewById(R.id.ar_view_in_room);
-        mRenderer = new PresentInRoomRenderer(this);
+        mSurfaceView = (SurfaceView) findViewById(R.id.ar_view_on_plane);
+        mRenderer = new PresentOnPlaneRenderer(this);
         mSurfaceView.setSurfaceRenderer(mRenderer);
         // 不要让SurfaceView显示在最上层
         mSurfaceView.setZOrderOnTop(false);
@@ -198,6 +268,12 @@ public class PresentationInRoomActivity extends Activity {
         }
     }
 
+    private void updateIconsFirstButtonResource(int resourceId) {
+        ExpandableItem arrowUpExpandableItem = new ExpandableItem();
+        arrowUpExpandableItem.setResourceId(resourceId);
+        mExpandableSelector.updateExpandableItem(0, arrowUpExpandableItem);
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
@@ -212,6 +288,94 @@ public class PresentationInRoomActivity extends Activity {
 
             mHandlerMaskControl.sendEmptyMessage(EVENT_STARTUP_TANGO_OK_DISPLAY);
         }
+
+        mImageViewFocusing = (ImageView)findViewById(R.id.imageview_focusing);
+        mImageViewFocusing.setVisibility(View.INVISIBLE);
+
+        // 扩展Button的初始化
+        mExpandableSelector = (ExpandableSelector)findViewById(R.id.es_icon);
+        List<ExpandableItem> expandableItems = new ArrayList<ExpandableItem>();
+        ExpandableItem item = new ExpandableItem();
+        item.setResourceId(R.mipmap.ic_keyboard_arrow_up_black);
+        expandableItems.add(item);
+        item = new ExpandableItem();
+        item.setResourceId(R.mipmap.location);
+        expandableItems.add(item);
+        item = new ExpandableItem();
+        item.setResourceId(R.mipmap.rotation);
+        expandableItems.add(item);
+        item = new ExpandableItem();
+        item.setResourceId(R.mipmap.zoom);
+        expandableItems.add(item);
+//                item = new ExpandableItem();
+//                item.setResourceId(R.mipmap.move);
+//                expandableItems.add(item);
+        mExpandableSelector.showExpandableItems(expandableItems);
+        mExpandableSelector.setOnExpandableItemClickListener(new OnExpandableItemClickListener() {
+            @Override
+            public void onExpandableItemClickListener(int index, View view) {
+                if (index == 0 && mExpandableSelector.isExpanded()) {
+                    mExpandableSelector.collapse();
+                    updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
+                }
+                switch (index) {
+                    case 1:// 定位button
+//                                mWorkThread = new WorkThread();
+//                                mWorkThread.executeTask();
+                        if (mTimerTask!= null){
+                            mTimerTask.cancel();
+                            mTimerTask = new MyTimerTask();
+                        }else {
+                            mTimerTask = new MyTimerTask();
+                        }
+                        mTimer.schedule(mTimerTask, 0, 100);
+
+                        // Toast.makeText(PresentOnPlaneActivity.this, "定位",Toast.LENGTH_SHORT).show();
+                        mImageViewFocusing.setVisibility(View.VISIBLE);
+                        mExpandableSelector.collapse();
+                        updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
+
+                        break;
+                    case 2:// 旋转button
+                        Toast.makeText(PresentOnPlaneActivity.this, "旋转",Toast.LENGTH_SHORT).show();
+                        mExpandableSelector.collapse();
+                        updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
+                        break;
+                    case 3:// 缩放button
+                        mLayoutZoom.setVisibility(View.VISIBLE);
+                        //Toast.makeText(PresentOnPlaneActivity.this, "缩放",Toast.LENGTH_SHORT).show();
+                        mExpandableSelector.collapse();
+                        updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
+                        break;
+                    /*
+                    case 4:// 移动button
+                        Toast.makeText(PresentOnPlaneActivity.this, "移动",Toast.LENGTH_SHORT).show();
+                        mExpandableSelector.collapse();
+                        updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_up_black);
+                        break;
+                    */
+                    default:
+                }
+            }
+        });
+        mExpandableSelector.setExpandableSelectorListener(new ExpandableSelectorListener() {
+            @Override public void onCollapse() {
+
+            }
+
+            @Override public void onExpand() {
+                updateIconsFirstButtonResource(R.mipmap.ic_keyboard_arrow_down_black);
+            }
+
+            @Override public void onCollapsed() {
+
+            }
+
+            @Override public void onExpanded() {
+//                        mButtonZoomIn.setVisibility(View.INVISIBLE);
+//                        mButtonZoomOut.setVisibility(View.INVISIBLE);
+            }
+        });
     }
 
     @Override
@@ -254,7 +418,7 @@ public class PresentationInRoomActivity extends Activity {
      * 我们需要在每次OnResume()或OnStart()时调用本方法，重建Tango Object
      */
     private void bindTangoService() {
-        mTango = new Tango(PresentationInRoomActivity.this, new Runnable() {
+        mTango = new Tango(PresentOnPlaneActivity.this, new Runnable() {
             // Pass in a Runnable to be called from UI thread when Tango is ready; this Runnable
             // will be running on a new thread.
             // When Tango is ready, we can call Tango functions safely here only when there are no
@@ -263,7 +427,7 @@ public class PresentationInRoomActivity extends Activity {
             public void run() {
                 // Synchronize against disconnecting while the service is being used in the OpenGL
                 // thread or in the UI thread.
-                synchronized (PresentationInRoomActivity.this) {
+                synchronized (PresentOnPlaneActivity.this) {
                     try {
                         mConfig = setupTangoConfig(mTango);
                         mTango.connect(mConfig);
@@ -285,6 +449,58 @@ public class PresentationInRoomActivity extends Activity {
                 }
             }
         });
+    }
+
+    /**
+     * 此处检查并申请app必要的系统权限
+     * 本app目前仅用到Camera
+     *
+     * @return 如拥有权限，返回true，否则返回false。
+     */
+    private boolean checkAndRequestPermissions() {
+        if (!hasCameraPermission()) {
+            requestCameraPermission();
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check to see that we have the necessary permissions for this app.
+     */
+    private boolean hasCameraPermission() {
+        return ContextCompat.checkSelfPermission(this, CAMERA_PERMISSION) ==
+                PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Request the necessary permissions for this app.
+     */
+    private void requestCameraPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this, CAMERA_PERMISSION)) {
+            showRequestPermissionRationale();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{CAMERA_PERMISSION},
+                    CAMERA_PERMISSION_CODE);
+        }
+    }
+
+    /**
+     * If the user has declined the permission before, we have to explain that the app needs this
+     * permission.
+     */
+    private void showRequestPermissionRationale() {
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setMessage("Java Plane Fitting Example requires camera permission")
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ActivityCompat.requestPermissions(PresentOnPlaneActivity.this,
+                                new String[]{CAMERA_PERMISSION}, CAMERA_PERMISSION_CODE);
+                    }
+                })
+                .create();
+        dialog.show();
     }
 
     /**
@@ -364,7 +580,7 @@ public class PresentationInRoomActivity extends Activity {
                 // into the scene.
 
                 try {
-                    synchronized (PresentationInRoomActivity.this) {
+                    synchronized (PresentOnPlaneActivity.this) {
                         // 如果没连接到Tango Service，以下代码不执行
                         if (!mIsConnected) {
                             return;
@@ -516,7 +732,7 @@ public class PresentationInRoomActivity extends Activity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(PresentationInRoomActivity.this,
+                Toast.makeText(PresentOnPlaneActivity.this,
                         getString(resId), Toast.LENGTH_LONG).show();
                 finish();
             }
@@ -543,6 +759,137 @@ public class PresentationInRoomActivity extends Activity {
     }
 
     /**
+     * 利用Tango Support Library + 点云数据来计算平面。
+     * 返回值：平面的transform矩阵
+     */
+    private float[] doFitPlane(float u, float v, double rgbTimestamp) {
+        TangoPointCloudData pointCloud = mPointCloudManager.getLatestPointCloud();
+
+        if (pointCloud == null) {
+            return null;
+        }
+
+        TangoPoseData depthToColorPose = TangoSupport.getPoseAtTime(
+                rgbTimestamp,
+                TangoPoseData.COORDINATE_FRAME_CAMERA_DEPTH,
+                TangoPoseData.COORDINATE_FRAME_CAMERA_COLOR,
+                TangoSupport.ENGINE_TANGO,
+                TangoSupport.ENGINE_TANGO,
+                TangoSupport.ROTATION_IGNORED);
+        if (depthToColorPose.statusCode != TangoPoseData.POSE_VALID) {
+            Log.d(TAG, "Could not get a valid pose from depth camera"
+                    + "to color camera at time " + rgbTimestamp);
+            return null;
+        }
+
+        // 根据相机位姿计算平面模型，数据来源于深度相机
+        TangoSupport.IntersectionPointPlaneModelPair intersectionPointPlaneModelPair =
+                TangoSupport.fitPlaneModelNearPoint(pointCloud,
+                        new double[] {0.0, 0.0, 0.0},
+                        new double[] {0.0, 0.0, 0.0, 1.0},
+                        u, v,
+                        mDisplayRotation,
+                        depthToColorPose.translation,
+                        depthToColorPose.rotation);
+
+        mPlanePlacedTimestamp = mRgbTimestampGlThread;
+        return convertPlaneModelToMatrix(intersectionPointPlaneModelPair);
+    }
+
+    private float[] convertPlaneModelToMatrix(TangoSupport.IntersectionPointPlaneModelPair planeModel) {
+        // 注意，深度相机的坐标系:
+        // X - right
+        // Y - down
+        // Z - forward
+        float[] up = new float[]{0, 1, 0, 0};
+        float[] depthTPlane = matrixFromPointNormalUp(
+                planeModel.intersectionPoint,
+                planeModel.planeModel,
+                up);
+        return depthTPlane;
+    }
+
+    /**
+     * Calculates a transformation matrix based on a point, a normal and the up gravity vector.
+     * The coordinate frame of the target transformation will be a right handed system with Z+ in
+     * the direction of the normal and Y+ up.
+     */
+    private float[] matrixFromPointNormalUp(double[] point, double[] normal, float[] up) {
+        float[] zAxis = new float[]{(float) normal[0], (float) normal[1], (float) normal[2]};
+        normalize(zAxis);
+        float[] xAxis = crossProduct(up, zAxis);
+        normalize(xAxis);
+        float[] yAxis = crossProduct(zAxis, xAxis);
+        normalize(yAxis);
+        float[] m = new float[16];
+        Matrix.setIdentityM(m, 0);
+        m[0] = xAxis[0];
+        m[1] = xAxis[1];
+        m[2] = xAxis[2];
+        m[4] = yAxis[0];
+        m[5] = yAxis[1];
+        m[6] = yAxis[2];
+        m[8] = zAxis[0];
+        m[9] = zAxis[1];
+        m[10] = zAxis[2];
+        m[12] = (float) point[0];
+        m[13] = (float) point[1];
+        m[14] = (float) point[2];
+        return m;
+    }
+
+    /**
+     * Normalize a vector.
+     */
+    private void normalize(float[] v) {
+        double norm = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        v[0] /= norm;
+        v[1] /= norm;
+        v[2] /= norm;
+    }
+
+    /**
+     * Cross product between two vectors following the right-hand rule.
+     */
+    private float[] crossProduct(float[] v1, float[] v2) {
+        float[] result = new float[3];
+        result[0] = v1[1] * v2[2] - v2[1] * v1[2];
+        result[1] = v1[2] * v2[0] - v2[2] * v1[0];
+        result[2] = v1[0] * v2[1] - v2[0] * v1[1];
+        return result;
+    }
+
+    /**
+     * 开启轮训服务
+     */
+    private void startLoopService(Context context, int seconds, Class<?> cls, String action){
+        // 获取AlarmManager系统服务
+        AlarmManager manager = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+        //包装需要执行Service的Intent
+        Intent intent = new Intent(context, cls);
+        intent.setAction(action);
+        PendingIntent pendingIntent = PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //触发服务的起始时间
+        long triggerAtTime = SystemClock.elapsedRealtime();
+        //使用AlarmManger的setRepeating方法设置定期执行的时间间隔（seconds秒）和需要执行的Service
+        manager.setRepeating(AlarmManager.ELAPSED_REALTIME, triggerAtTime, seconds, pendingIntent);
+    }
+
+    /**
+     * 停止轮询服务
+     */
+    private void stopLoopSevice(Context context, Class<?> cls, String action){
+        AlarmManager manager = (AlarmManager) context
+                .getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, cls);
+        intent.setAction(action);
+        PendingIntent pendingIntent = PendingIntent.getService(context, 0,
+                intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        //取消正在执行的服务
+        manager.cancel(pendingIntent);
+    }
+
+    /**
      * 隐藏虚拟按键
      * @param window
      */
@@ -557,56 +904,65 @@ public class PresentationInRoomActivity extends Activity {
         window.getDecorView().setSystemUiVisibility(uiOptions);
     }
 
-    /**
-     * 此处检查并申请app必要的系统权限
-     * 本app目前仅用到Camera
-     *
-     * @return 如拥有权限，返回true，否则返回false。
-     */
-    private boolean checkAndRequestPermissions() {
-        if (!hasCameraPermission()) {
-            requestCameraPermission();
-            return false;
+    private class WorkThread extends Thread{
+        private Handler mHandler;
+        private Looper mLooper;
+
+        public WorkThread(){
+            start();
+
         }
-        return true;
-    }
 
-    /**
-     * Check to see that we have the necessary permissions for this app.
-     */
-    private boolean hasCameraPermission() {
-        return ContextCompat.checkSelfPermission(this, CAMERA_PERMISSION) ==
-                PackageManager.PERMISSION_GRANTED;
-    }
+        public void run() {
 
-    /**
-     * Request the necessary permissions for this app.
-     */
-    private void requestCameraPermission() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(this, CAMERA_PERMISSION)) {
-            showRequestPermissionRationale();
-        } else {
-            ActivityCompat.requestPermissions(this, new String[]{CAMERA_PERMISSION},
-                    CAMERA_PERMISSION_CODE);
+            Looper.prepare();
+            mLooper = Looper.myLooper();
+            mHandler = new Handler(mLooper){
+                @Override
+                public void handleMessage(Message msg) {
+                    mHandlerFindFocus.sendEmptyMessage(EVENT_GOT_FOCUS);
+                    SystemClock.sleep(100);
+                }
+            };
+            Looper.loop();
+        }
+
+        public void exit() {
+            if (mLooper != null) {
+                mLooper.quit();
+                mLooper = null;
+            }
+        }
+
+        public void executeTask() {
+            if (mLooper == null || mHandler == null)
+                return;
+            Message msg = Message.obtain();
+            mHandler.sendMessage(msg);
         }
     }
 
-    /**
-     * If the user has declined the permission before, we have to explain that the app needs this
-     * permission.
-     */
-    private void showRequestPermissionRationale() {
-        final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setMessage("Java Plane Fitting Example requires camera permission")
-                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        ActivityCompat.requestPermissions(PresentationInRoomActivity.this,
-                                new String[]{CAMERA_PERMISSION}, CAMERA_PERMISSION_CODE);
-                    }
-                })
-                .create();
-        dialog.show();
-    }
+    private class MyTimerTask extends TimerTask{
+        @Override
+        public void run() {
+            try {
+                // 在手机上Touch的点，利用点云数据找到一个适配的平面
+                // Synchronize against concurrent access to the RGB timestamp in the OpenGL thread
+                // and a possible service disconnection due to an onPause event.
+                synchronized (this) {
+                    mDepthTPlane = doFitPlane(0.5f, 0.5f, mRgbTimestampGlThread);
+                    mHandlerFindFocus.sendEmptyMessage(EVENT_GOT_FOCUS);
+                    //mFocusRenderer.setvMatrix(mDepthTPlane);
+                    mHandlerMaskControl.sendEmptyMessage(EVENT_SHOW_PUTMODEL);
+                }
 
+            } catch (TangoException t) {
+                mHandlerFindFocus.sendEmptyMessage(EVENT_LOSE_FOCUS);
+                //mFocusRenderer.setvMatrix(lMatrix);
+
+            } catch (SecurityException t) {
+                Log.e(TAG, getString(R.string.failed_permissions), t);
+            }
+        }
+    }
 }

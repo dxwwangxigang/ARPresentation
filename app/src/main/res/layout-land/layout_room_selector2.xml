@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:id="@+id/relativeLayout_room_selector"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="360dp"
+    android:layout_height="wrap_content"
+    android:background="@color/colorAccent">
+
+
+    <TextView
+        android:id="@+id/text_room_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="样板间(测试2)"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_room_name"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:textColor="@color/white"
+        android:text="设计风格："
+        android:textSize="14sp"
+        android:id="@+id/textView"/>
+
+    <TextView
+        android:id="@+id/text_room_style"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:text="欧式风格"
+        android:textSize="14sp"
+        android:layout_alignBaseline="@+id/textView"
+        android:layout_alignBottom="@+id/textView"
+        android:layout_toEndOf="@+id/textView"/>
+
+    <TextView
+        android:id="@+id/text2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="设计师："
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        android:layout_below="@id/text_room_style"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"/>
+
+    <TextView
+        android:id="@+id/text_room_designer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:text="赵铁柱"
+        android:textSize="14sp"
+        android:layout_alignBaseline="@+id/text2"
+        android:layout_alignBottom="@+id/text2"
+        android:layout_toEndOf="@+id/text2"/>
+
+    <TextView
+        android:id="@+id/text3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="户型结构："
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        android:layout_below="@id/text2"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"/>
+
+    <TextView
+        android:id="@+id/text_room_structure"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:text="3室2厅"
+        android:textSize="14sp"
+        android:layout_alignBaseline="@+id/text3"
+        android:layout_alignBottom="@+id/text3"
+        android:layout_toEndOf="@+id/text3"/>
+
+    <ImageView
+        android:id="@+id/room_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/room"
+        android:layout_alignTop="@+id/text_room_name"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="8dp"/>
+    <LinearLayout
+        android:id="@+id/layout_update_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text3"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="模型更新时间："
+            android:textSize="12sp"
+            android:textColor="@color/white"/>
+
+        <TextView
+            android:id="@+id/text_model_update_day"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="2017年10月24日"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:textColor="@color/white"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/text_model_update_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="13:34:08"
+            android:textSize="12sp"
+            android:textColor="@color/white"/>
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/button_enter_room"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@mipmap/enter"
+        android:background="@android:color/transparent"
+        android:layout_below="@id/layout_update_time"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"/>
+
+    <RelativeLayout
+        android:id="@+id/layout_opperate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/button_enter_room"
+        android:layout_marginTop="16dp"
+        android:background="@color/colorPrimaryDark">
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp">
+            <TextView
+            android:id="@+id/text_4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            android:text="参观  "
+            android:textSize="12sp"
+            android:textColor="@color/white"/>
+            <TextView
+                android:id="@+id/text_room_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:text="14"
+                android:textSize="12sp"
+                android:textColor="@color/white"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true">
+            <TextView
+                android:id="@+id/text5"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:text="喜欢  "
+                android:textSize="12sp"
+                android:textColor="@color/white"/>
+            <TextView
+                android:id="@+id/text_room_like"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4dp"
+                android:text="8"
+                android:textSize="12sp"
+                android:textColor="@color/white"/>
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+</RelativeLayout>

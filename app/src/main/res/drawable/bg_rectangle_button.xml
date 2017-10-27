@@ -9,8 +9,8 @@
         android:bottomLeftRadius="4dp"
         android:bottomRightRadius="4dp"/>
     <size
-        android:width="50dp"
-        android:height="15dp"/>
+        android:width="30dp"
+        android:height="10dp"/>
     <solid
         android:color="@color/white"/>
 

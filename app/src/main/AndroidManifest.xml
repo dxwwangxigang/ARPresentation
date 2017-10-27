@@ -21,11 +21,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".PresentationOnPlaneActivity"
+            android:name=".PresentOnPlaneActivity"
             android:label="@string/title_activity_main"
             android:screenOrientation="landscape">
         </activity>
-        <activity android:name=".PresentationInRoomActivity">
+        <activity android:name=".PresentInRoomActivity"
+                  android:screenOrientation="landscape">
+        </activity>
+        <activity android:name=".AddRoomActivity"
+                  android:screenOrientation="landscape">
         </activity>
     </application>
 

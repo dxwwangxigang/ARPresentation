@@ -16,7 +16,6 @@
 package com.dxesoft.ar.tango.arpresentation;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.util.Log;
 import android.view.MotionEvent;
 
@@ -25,7 +24,6 @@ import com.google.tango.support.TangoSupport;
 
 import org.rajawali3d.Object3D;
 import org.rajawali3d.lights.DirectionalLight;
-import org.rajawali3d.loader.Loader3DSMax;
 import org.rajawali3d.loader.LoaderOBJ;
 import org.rajawali3d.loader.ParsingException;
 import org.rajawali3d.materials.Material;
@@ -36,14 +34,9 @@ import org.rajawali3d.materials.textures.StreamingTexture;
 import org.rajawali3d.materials.textures.Texture;
 import org.rajawali3d.math.Matrix4;
 import org.rajawali3d.math.Quaternion;
-import org.rajawali3d.math.vector.Vector3;
-import org.rajawali3d.primitives.Cube;
-import org.rajawali3d.primitives.Line3D;
 import org.rajawali3d.primitives.Plane;
 import org.rajawali3d.primitives.ScreenQuad;
 import org.rajawali3d.renderer.Renderer;
-
-import java.util.Stack;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -52,8 +45,8 @@ import javax.microedition.khronos.opengles.GL10;
  * The position of the cube in the OpenGL world is updated using the {@code updateObjectPose}
  * method.
  */
-public class PlaneFittingRenderer extends Renderer {
-    private static final String TAG = PlaneFittingRenderer.class.getSimpleName();
+public class PresentOnPlaneRenderer extends Renderer {
+    private static final String TAG = PresentOnPlaneRenderer.class.getSimpleName();
     private static final float CUBE_SIDE_LENGTH = 0.1f;
     private static final float AXIS_THICKNESS = 10.0f;
 
@@ -82,7 +75,7 @@ public class PlaneFittingRenderer extends Renderer {
     private float mRotationZ = 0;
     private float mScale = 0.01f;
 
-    public PlaneFittingRenderer(Context context) {
+    public PresentOnPlaneRenderer(Context context) {
         super(context);
     }
 
